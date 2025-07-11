@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: ai-application
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      init:
+        pull-model-strategy: never
+        chat:
+          additional-models:
+            - llama3.1
+    model:
+      chat: ollama
+
+server:
+  port: 8081
