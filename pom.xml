@@ -16,9 +16,7 @@
     <description>java-all-in-one</description>
 
     <modules>
-        <module>demo-application</module>
-        <module>demo-debug-spring</module>
-        <module>demo-ai</module>
+
     </modules>
 
     <properties>
