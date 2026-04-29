@@ -18,7 +18,7 @@ spring:
   datasource:
     url: jdbc:mysql://192.168.75.128:3306/user_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: roott
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
