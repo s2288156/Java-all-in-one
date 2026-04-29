@@ -38,12 +38,6 @@
             <artifactId>nacos-client</artifactId>
         </dependency>
 
-        <!-- Bootstrap -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-bootstrap</artifactId>
-        </dependency>
-
         <!-- JJWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
