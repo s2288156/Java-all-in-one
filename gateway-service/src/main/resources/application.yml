@@ -5,6 +5,16 @@ spring:
   application:
     name: gateway-service
   config:
+    import: nacos:gateway-service.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.75.128:8848
+        namespace: public
+      config:
+        server-addr: 192.168.75.128:8848
+        namespace: public
+        file-extension: yml
     gateway:
       discovery:
         locator:

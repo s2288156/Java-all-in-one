@@ -4,6 +4,17 @@ server:
 spring:
   application:
     name: auth-service
+  config:
+    import: nacos:auth-service.yml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.75.128:8848
+        namespace: public
+      config:
+        server-addr: 192.168.75.128:8848
+        namespace: public
+        file-extension: yml
 
 jwt:
   secret: mySecretKeyForJWTAuthentication1234567890
