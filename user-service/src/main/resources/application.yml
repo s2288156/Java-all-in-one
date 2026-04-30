@@ -4,6 +4,15 @@ server:
 spring:
   application:
     name: user-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.75.128:8848
+        namespace: public
+      config:
+        server-addr: 192.168.75.128:8848
+        namespace: public
+        file-extension: yml
   datasource:
     url: jdbc:mysql://192.168.75.128:3306/user_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
