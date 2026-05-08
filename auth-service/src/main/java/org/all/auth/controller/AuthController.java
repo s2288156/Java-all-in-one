@@ -1,56 +1,49 @@
 package org.all.auth.controller;
 
 import jakarta.validation.Valid;
-import org.all.auth.config.JwtConfig;
+import org.all.auth.client.KeycloakClient;
+import org.all.auth.client.KeycloakClient.KeycloakTokenResponse;
 import org.all.auth.dto.LoginRequest;
 import org.all.auth.dto.LoginResponse;
-import org.all.auth.dto.ValidateResponse;
-import org.all.auth.util.JwtUtil;
+import org.all.auth.dto.RefreshTokenRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final JwtUtil jwtUtil;
-    private final JwtConfig jwtConfig;
+    private final KeycloakClient keycloakClient;
 
-    public AuthController(JwtUtil jwtUtil, JwtConfig jwtConfig) {
-        this.jwtUtil = jwtUtil;
-        this.jwtConfig = jwtConfig;
+    public AuthController(KeycloakClient keycloakClient) {
+        this.keycloakClient = keycloakClient;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", "USER");
-        
-        String token = jwtUtil.generateToken(request.getEmail(), claims);
-        
-        LoginResponse response = LoginResponse.builder()
-                .token(token)
-                .tokenType("Bearer")
-                .expiresIn(jwtConfig.getExpiration() / 1000)
-                .build();
-        
-        return ResponseEntity.ok(response);
+    public Mono<ResponseEntity<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+        return keycloakClient.getToken(request.getEmail(), request.getPassword())
+                .map(response -> {
+                    LoginResponse loginResponse = LoginResponse.builder()
+                            .token(response.getAccess_token())
+                            .tokenType(response.getToken_type())
+                            .expiresIn(response.getExpires_in())
+                            .build();
+                    return ResponseEntity.ok(loginResponse);
+                });
     }
 
-    @PostMapping("/validate")
-    public ResponseEntity<ValidateResponse> validate(@RequestParam("token") String token) {
-        boolean isValid = jwtUtil.validateToken(token);
-        String username = isValid ? jwtUtil.extractUsername(token) : null;
-        
-        ValidateResponse response = ValidateResponse.builder()
-                .valid(isValid)
-                .username(username)
-                .build();
-        
-        return ResponseEntity.ok(response);
+    @PostMapping("/refresh")
+    public Mono<ResponseEntity<LoginResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return keycloakClient.refreshToken(request.getRefreshToken())
+                .map(response -> {
+                    LoginResponse loginResponse = LoginResponse.builder()
+                            .token(response.getAccess_token())
+                            .tokenType(response.getToken_type())
+                            .expiresIn(response.getExpires_in())
+                            .build();
+                    return ResponseEntity.ok(loginResponse);
+                });
     }
 
     @GetMapping("/health")

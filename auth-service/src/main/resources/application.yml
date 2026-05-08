@@ -16,6 +16,9 @@ spring:
         namespace: public
         file-extension: yml
 
-jwt:
-  secret: mySecretKeyForJWTAuthentication1234567890
-  expiration: 86400000
+keycloak:
+  server-url: http://localhost:8080
+  realm: master
+  client-id: auth-service
+  client-secret: your-client-secret
+  token-uri: ${keycloak.server-url}/realms/${keycloak.realm}/protocol/openid-connect/token

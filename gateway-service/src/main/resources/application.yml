@@ -6,6 +6,12 @@ spring:
     name: gateway-service
   config:
     import: nacos:gateway-service.yml
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.server-url}/realms/${keycloak.realm}
+          jwk-set-uri: ${keycloak.server-url}/realms/${keycloak.realm}/protocol/openid-connect/certs
   cloud:
     nacos:
       discovery:
@@ -41,3 +47,7 @@ spring:
             - Path=/api/admin/**
           filters:
             - StripPrefix=2
+
+keycloak:
+  server-url: http://localhost:8080
+  realm: master
