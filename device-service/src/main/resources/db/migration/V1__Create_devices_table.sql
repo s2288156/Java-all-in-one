@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS devices (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    device_code VARCHAR(64) NOT NULL UNIQUE,
+    device_name VARCHAR(128) NOT NULL,
+    device_type VARCHAR(64) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    location VARCHAR(255),
+    ip_address VARCHAR(64),
+    mac_address VARCHAR(64),
+    serial_number VARCHAR(64),
+    manufacturer VARCHAR(128),
+    model VARCHAR(128),
+    installation_date DATETIME,
+    last_heartbeat DATETIME,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    INDEX idx_device_code (device_code),
+    INDEX idx_status (status),
+    INDEX idx_device_type (device_type),
+    INDEX idx_location (location)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
