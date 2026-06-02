@@ -21,6 +21,7 @@
         <module>user-service</module>
         <module>admin-service</module>
         <module>device-service</module>
+        <module>demo-module</module>
     </modules>
 
     <properties>
