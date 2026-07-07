@@ -1,9 +1,8 @@
 package org.all.device.service;
 
+import org.all.common.model.PageResponse;
 import org.all.device.dto.DeviceRequest;
 import org.all.device.dto.DeviceResponse;
-
-import java.util.List;
 
 public interface DeviceService {
 
@@ -13,11 +12,11 @@ public interface DeviceService {
 
     DeviceResponse getDeviceByCode(String deviceCode);
 
-    List<DeviceResponse> getAllDevices();
+    PageResponse<DeviceResponse> getAllDevices(int page, int size);
 
-    List<DeviceResponse> getDevicesByStatus(String status);
+    PageResponse<DeviceResponse> getDevicesByStatus(String status, int page, int size);
 
-    List<DeviceResponse> getDevicesByType(String deviceType);
+    PageResponse<DeviceResponse> getDevicesByType(String deviceType, int page, int size);
 
     DeviceResponse updateDevice(Long id, DeviceRequest request);
 

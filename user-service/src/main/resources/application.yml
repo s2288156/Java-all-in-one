@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: 28082
 
 spring:
   application:
@@ -9,14 +9,14 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 192.168.75.128:8848
+        server-addr: 127.0.0.1:8848
         namespace: public
       config:
-        server-addr: 192.168.75.128:8848
+        server-addr: 127.0.0.1:8848
         namespace: public
         file-extension: yml
   datasource:
-    url: jdbc:mysql://192.168.75.128:3306/user_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://127.0.0.1:3306/user_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver

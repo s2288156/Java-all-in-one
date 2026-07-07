@@ -1,22 +1,29 @@
 package org.all.device.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.all.common.exception.BusinessException;
+import org.all.common.model.PageResponse;
 import org.all.device.dto.DeviceRequest;
 import org.all.device.dto.DeviceResponse;
 import org.all.device.entity.Device;
 import org.all.device.repository.DeviceRepository;
 import org.all.device.service.DeviceService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 @Transactional
 public class DeviceServiceImpl implements DeviceService {
+
+    private static final Pattern STATUS_PATTERN = Pattern.compile("^(online|offline|maintenance)$");
 
     private final DeviceRepository deviceRepository;
 
@@ -27,7 +34,7 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public DeviceResponse createDevice(DeviceRequest request) {
         if (deviceRepository.existsByDeviceCode(request.getDeviceCode())) {
-            throw new IllegalArgumentException("设备编码已存在: " + request.getDeviceCode());
+            throw new BusinessException(409, "设备编码已存在: " + request.getDeviceCode());
         }
 
         Device device = Device.builder()
@@ -54,7 +61,7 @@ public class DeviceServiceImpl implements DeviceService {
     @Transactional(readOnly = true)
     public DeviceResponse getDeviceById(Long id) {
         Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("设备不存在: " + id));
+                .orElseThrow(() -> new BusinessException(404, "设备不存在: " + id));
         return toDeviceResponse(device);
     }
 
@@ -62,43 +69,40 @@ public class DeviceServiceImpl implements DeviceService {
     @Transactional(readOnly = true)
     public DeviceResponse getDeviceByCode(String deviceCode) {
         Device device = deviceRepository.findByDeviceCode(deviceCode)
-                .orElseThrow(() -> new IllegalArgumentException("设备不存在: " + deviceCode));
+                .orElseThrow(() -> new BusinessException(404, "设备不存在: " + deviceCode));
         return toDeviceResponse(device);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<DeviceResponse> getAllDevices() {
-        return deviceRepository.findAll().stream()
-                .map(this::toDeviceResponse)
-                .collect(Collectors.toList());
+    public PageResponse<DeviceResponse> getAllDevices(int page, int size) {
+        Page<Device> devicePage = deviceRepository.findAll(PageRequest.of(page, size, Sort.by("id")));
+        return toPageResponse(devicePage);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<DeviceResponse> getDevicesByStatus(String status) {
-        return deviceRepository.findByStatus(status).stream()
-                .map(this::toDeviceResponse)
-                .collect(Collectors.toList());
+    public PageResponse<DeviceResponse> getDevicesByStatus(String status, int page, int size) {
+        Page<Device> devicePage = deviceRepository.findByStatus(status, PageRequest.of(page, size, Sort.by("id")));
+        return toPageResponse(devicePage);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<DeviceResponse> getDevicesByType(String deviceType) {
-        return deviceRepository.findByDeviceType(deviceType).stream()
-                .map(this::toDeviceResponse)
-                .collect(Collectors.toList());
+    public PageResponse<DeviceResponse> getDevicesByType(String deviceType, int page, int size) {
+        Page<Device> devicePage = deviceRepository.findByDeviceType(deviceType, PageRequest.of(page, size, Sort.by("id")));
+        return toPageResponse(devicePage);
     }
 
     @Override
     public DeviceResponse updateDevice(Long id, DeviceRequest request) {
         Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("设备不存在: " + id));
+                .orElseThrow(() -> new BusinessException(404, "设备不存在: " + id));
 
         Device existingDevice = deviceRepository.findByDeviceCode(request.getDeviceCode())
                 .orElse(null);
         if (existingDevice != null && !existingDevice.getId().equals(id)) {
-            throw new IllegalArgumentException("设备编码已被使用: " + request.getDeviceCode());
+            throw new BusinessException(409, "设备编码已被使用: " + request.getDeviceCode());
         }
 
         device.setDeviceCode(request.getDeviceCode());
@@ -122,7 +126,7 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public void deleteDevice(Long id) {
         if (!deviceRepository.existsById(id)) {
-            throw new IllegalArgumentException("设备不存在: " + id);
+            throw new BusinessException(404, "设备不存在: " + id);
         }
         deviceRepository.deleteById(id);
         log.info("设备删除成功: {}", id);
@@ -131,7 +135,7 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public void deleteDeviceByCode(String deviceCode) {
         if (!deviceRepository.existsByDeviceCode(deviceCode)) {
-            throw new IllegalArgumentException("设备不存在: " + deviceCode);
+            throw new BusinessException(404, "设备不存在: " + deviceCode);
         }
         deviceRepository.deleteByDeviceCode(deviceCode);
         log.info("设备删除成功: {}", deviceCode);
@@ -139,8 +143,11 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Override
     public DeviceResponse updateDeviceStatus(Long id, String status) {
+        if (!STATUS_PATTERN.matcher(status).matches()) {
+            throw new BusinessException(400, "设备状态只能是 online、offline 或 maintenance");
+        }
         Device device = deviceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("设备不存在: " + id));
+                .orElseThrow(() -> new BusinessException(404, "设备不存在: " + id));
         device.setStatus(status);
         Device updatedDevice = deviceRepository.save(device);
         log.info("设备状态更新成功: {} -> {}", updatedDevice.getDeviceCode(), status);
@@ -150,12 +157,22 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public DeviceResponse updateHeartbeat(String deviceCode) {
         Device device = deviceRepository.findByDeviceCode(deviceCode)
-                .orElseThrow(() -> new IllegalArgumentException("设备不存在: " + deviceCode));
+                .orElseThrow(() -> new BusinessException(404, "设备不存在: " + deviceCode));
         device.setLastHeartbeat(LocalDateTime.now());
         device.setStatus("online");
         Device updatedDevice = deviceRepository.save(device);
         log.info("设备心跳更新成功: {}", deviceCode);
         return toDeviceResponse(updatedDevice);
+    }
+
+    private PageResponse<DeviceResponse> toPageResponse(Page<Device> page) {
+        return PageResponse.<DeviceResponse>builder()
+                .content(page.getContent().stream().map(this::toDeviceResponse).collect(Collectors.toList()))
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .build();
     }
 
     private DeviceResponse toDeviceResponse(Device device) {

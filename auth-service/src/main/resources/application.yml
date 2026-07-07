@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 28081
 
 spring:
   application:
@@ -9,16 +9,16 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 192.168.75.128:8848
+        server-addr: 127.0.0.1:8848
         namespace: public
       config:
-        server-addr: 192.168.75.128:8848
+        server-addr: 127.0.0.1:8848
         namespace: public
         file-extension: yml
 
 keycloak:
-  server-url: http://localhost:8080
-  realm: master
-  client-id: auth-service
-  client-secret: your-client-secret
+  server-url: ${KEYCLOAK_SERVER_URL:}
+  realm: ${KEYCLOAK_REALM:master}
+  client-id: ${KEYCLOAK_CLIENT_ID:auth-service}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:your-client-secret}
   token-uri: ${keycloak.server-url}/realms/${keycloak.realm}/protocol/openid-connect/token

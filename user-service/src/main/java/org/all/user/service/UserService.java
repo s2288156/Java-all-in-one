@@ -1,9 +1,8 @@
 package org.all.user.service;
 
+import org.all.common.model.PageResponse;
 import org.all.user.dto.UserRequest;
 import org.all.user.dto.UserResponse;
-
-import java.util.List;
 
 public interface UserService {
 
@@ -11,7 +10,7 @@ public interface UserService {
     
     UserResponse getUserById(Long id);
     
-    List<UserResponse> getAllUsers();
+    PageResponse<UserResponse> getAllUsers(int page, int size);
     
     UserResponse updateUser(Long id, UserRequest request);
     
