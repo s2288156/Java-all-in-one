@@ -47,7 +47,7 @@ public class AuthController {
     }
 
     @GetMapping("/health")
-    public ResponseEntity<String> health() {
-        return ResponseEntity.ok("Auth Service is running");
+    public Mono<ResponseEntity<String>> health() {
+        return Mono.just(ResponseEntity.ok("Auth Service is running"));
     }
 }
