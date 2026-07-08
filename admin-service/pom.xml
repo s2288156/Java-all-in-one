@@ -32,15 +32,10 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- Common Modules -->
+        <!-- Common Lib -->
         <dependency>
             <groupId>org.all</groupId>
-            <artifactId>common-model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.all</groupId>
-            <artifactId>common-exception</artifactId>
+            <artifactId>common-lib</artifactId>
             <version>${project.version}</version>
         </dependency>
 

@@ -16,9 +16,7 @@
     <description>java-all-in-one</description>
 
     <modules>
-        <module>common-model</module>
-        <module>common-exception</module>
-        <module>common-core</module>
+        <module>common-lib</module>
         <module>gateway-service</module>
         <module>auth-service</module>
         <module>user-service</module>
