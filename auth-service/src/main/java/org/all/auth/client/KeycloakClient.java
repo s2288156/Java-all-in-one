@@ -5,64 +5,69 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.all.auth.config.KeycloakProperties;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import org.springframework.web.client.RestTemplate;
 
 @Component
 public class KeycloakClient {
 
-    private final WebClient webClient;
+    private final RestTemplate restTemplate;
     private final KeycloakProperties keycloakProperties;
 
     public KeycloakClient(KeycloakProperties keycloakProperties) {
         this.keycloakProperties = keycloakProperties;
-        this.webClient = WebClient.builder()
-                .build();
+        this.restTemplate = new RestTemplate();
     }
 
-    public Mono<KeycloakTokenResponse> getToken(String username, String password) {
+    public KeycloakTokenResponse getToken(String username, String password) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "password");
         formData.add("client_id", keycloakProperties.getClientId());
-        
+
         String clientSecret = keycloakProperties.getClientSecret();
         if (clientSecret != null && !clientSecret.isEmpty()) {
             formData.add("client_secret", clientSecret);
         }
-        
+
         formData.add("username", username);
         formData.add("password", password);
 
-        return webClient.post()
-                .uri(keycloakProperties.getTokenUri())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(formData)
-                .retrieve()
-                .bodyToMono(KeycloakTokenResponse.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formData, headers);
+        ResponseEntity<KeycloakTokenResponse> response = restTemplate.postForEntity(
+                keycloakProperties.getTokenUri(), request, KeycloakTokenResponse.class);
+
+        return response.getBody();
     }
 
-    public Mono<KeycloakTokenResponse> refreshToken(String refreshToken) {
+    public KeycloakTokenResponse refreshToken(String refreshToken) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "refresh_token");
         formData.add("client_id", keycloakProperties.getClientId());
-        
+
         String clientSecret = keycloakProperties.getClientSecret();
         if (clientSecret != null && !clientSecret.isEmpty()) {
             formData.add("client_secret", clientSecret);
         }
-        
+
         formData.add("refresh_token", refreshToken);
 
-        return webClient.post()
-                .uri(keycloakProperties.getTokenUri())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .bodyValue(formData)
-                .retrieve()
-                .bodyToMono(KeycloakTokenResponse.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formData, headers);
+        ResponseEntity<KeycloakTokenResponse> response = restTemplate.postForEntity(
+                keycloakProperties.getTokenUri(), request, KeycloakTokenResponse.class);
+
+        return response.getBody();
     }
 
     @Data

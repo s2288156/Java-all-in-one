@@ -8,7 +8,6 @@ import org.all.auth.dto.LoginResponse;
 import org.all.auth.dto.RefreshTokenRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,33 +20,29 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Mono<ResponseEntity<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        return keycloakClient.getToken(request.getEmail(), request.getPassword())
-                .map(response -> {
-                    LoginResponse loginResponse = LoginResponse.builder()
-                            .token(response.getAccess_token())
-                            .tokenType(response.getToken_type())
-                            .expiresIn(response.getExpires_in())
-                            .build();
-                    return ResponseEntity.ok(loginResponse);
-                });
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        KeycloakTokenResponse response = keycloakClient.getToken(request.getEmail(), request.getPassword());
+        LoginResponse loginResponse = LoginResponse.builder()
+                .token(response.getAccess_token())
+                .tokenType(response.getToken_type())
+                .expiresIn(response.getExpires_in())
+                .build();
+        return ResponseEntity.ok(loginResponse);
     }
 
     @PostMapping("/refresh")
-    public Mono<ResponseEntity<LoginResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        return keycloakClient.refreshToken(request.getRefreshToken())
-                .map(response -> {
-                    LoginResponse loginResponse = LoginResponse.builder()
-                            .token(response.getAccess_token())
-                            .tokenType(response.getToken_type())
-                            .expiresIn(response.getExpires_in())
-                            .build();
-                    return ResponseEntity.ok(loginResponse);
-                });
+    public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        KeycloakTokenResponse response = keycloakClient.refreshToken(request.getRefreshToken());
+        LoginResponse loginResponse = LoginResponse.builder()
+                .token(response.getAccess_token())
+                .tokenType(response.getToken_type())
+                .expiresIn(response.getExpires_in())
+                .build();
+        return ResponseEntity.ok(loginResponse);
     }
 
     @GetMapping("/health")
-    public Mono<ResponseEntity<String>> health() {
-        return Mono.just(ResponseEntity.ok("Auth Service is running"));
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("Auth Service is running");
     }
 }

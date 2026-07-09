@@ -2,13 +2,13 @@
 
 ## 模块概览
 
-| 模块 | 服务名 | 基础路径 | 端口 |
-|------|--------|----------|------|
-| auth-service | 认证服务 | `/api/auth` | 28081 |
-| admin-service | 管理服务 | `/api/admin` | 28085 |
-| user-service | 用户服务 | `/api/users` | 28082 |
-| device-service | 设备服务 | `/api/devices` | 28084 |
-| gateway-service | 网关服务 | - | 28888 |
+| 模块 | 服务名 | 基础路径 | 端口 | Swagger UI | OpenAPI JSON |
+|------|--------|----------|------|------------|--------------|
+| auth-service | 认证服务 | `/api/auth` | 28081 | [Swagger UI](http://127.0.0.1:28081/swagger-ui.html) | [JSON](http://127.0.0.1:28081/v3/api-docs) |
+| admin-service | 管理服务 | `/api/admin` | 28085 | [Swagger UI](http://127.0.0.1:28085/swagger-ui.html) | [JSON](http://127.0.0.1:28085/v3/api-docs) |
+| user-service | 用户服务 | `/api/users` | 28082 | [Swagger UI](http://127.0.0.1:28082/swagger-ui.html) | [JSON](http://127.0.0.1:28082/v3/api-docs) |
+| device-service | 设备服务 | `/api/devices` | 28084 | [Swagger UI](http://127.0.0.1:28084/swagger-ui.html) | [JSON](http://127.0.0.1:28084/v3/api-docs) |
+| gateway-service | 网关服务 | - | 28888 | - | - |
 
 ---
 
@@ -96,3 +96,49 @@
 | user-service | 6 |
 | device-service | 10 |
 | **总计** | **25** |
+
+---
+
+## OpenAPI 文档 (Apifox 可直接导入)
+
+### 访问地址
+
+服务启动后，可通过以下地址访问 OpenAPI 文档：
+
+| 服务 | Swagger UI | OpenAPI JSON |
+|------|------------|--------------|
+| auth-service | http://127.0.0.1:28081/swagger-ui.html | http://127.0.0.1:28081/v3/api-docs |
+| user-service | http://127.0.0.1:28082/swagger-ui.html | http://127.0.0.1:28082/v3/api-docs |
+| device-service | http://127.0.0.1:28084/swagger-ui.html | http://127.0.0.1:28084/v3/api-docs |
+| admin-service | http://127.0.0.1:28085/swagger-ui.html | http://127.0.0.1:28085/v3/api-docs |
+
+### 导出到 Apifox
+
+**方式一：使用导出脚本**
+
+```bash
+# 启动服务后执行
+./docs/export-openapi.sh
+```
+
+导出文件位于 `docs/openapi/` 目录下。
+
+**方式二：手动导入**
+
+1. 启动对应服务
+2. 浏览器访问 `http://127.0.0.1:{port}/v3/api-docs`，复制 JSON 内容
+3. 打开 Apifox -> 项目设置 -> 导入数据
+4. 选择 OpenAPI/Swagger 格式，粘贴或上传 JSON 文件
+
+### 代码即文档
+
+OpenAPI 文档从代码自动生成，保持同步。如需增强文档质量：
+
+```java
+@Operation(summary = "用户登录", description = "使用邮箱和密码登录，返回JWT Token")
+@ApiResponse(responseCode = "200", description = "登录成功")
+@PostMapping("/login")
+public Mono<ResponseEntity<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    // ...
+}
+```

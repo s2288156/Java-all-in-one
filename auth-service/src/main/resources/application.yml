@@ -16,6 +16,12 @@ spring:
         namespace: public
         file-extension: yml
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 keycloak:
   server-url: ${KEYCLOAK_SERVER_URL:}
   realm: ${KEYCLOAK_REALM:master}
