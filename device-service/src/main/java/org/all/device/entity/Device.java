@@ -56,20 +56,20 @@ public class Device {
     @Column(name = "last_heartbeat")
     private LocalDateTime lastHeartbeat;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "created_time")
+    private LocalDateTime createdTime;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_time")
+    private LocalDateTime updatedTime;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdTime = LocalDateTime.now();
+        updatedTime = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedTime = LocalDateTime.now();
     }
 }

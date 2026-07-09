@@ -190,8 +190,8 @@ public class DeviceServiceImpl implements DeviceService {
                 .model(device.getModel())
                 .installationDate(device.getInstallationDate())
                 .lastHeartbeat(device.getLastHeartbeat())
-                .createdAt(device.getCreatedAt())
-                .updatedAt(device.getUpdatedAt())
+                .createdTime(device.getCreatedTime())
+                .updatedTime(device.getUpdatedTime())
                 .build();
     }
 }

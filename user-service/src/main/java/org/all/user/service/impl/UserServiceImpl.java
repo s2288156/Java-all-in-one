@@ -34,8 +34,25 @@ public class UserServiceImpl implements UserService {
 
         User user = User.builder()
                 .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(request.getPassword() != null ? passwordEncoder.encode(request.getPassword()) : null)
                 .username(request.getUsername())
+                .keycloakId(request.getKeycloakId())
+                .build();
+
+        User savedUser = userRepository.save(user);
+        return toUserResponse(savedUser);
+    }
+
+    @Override
+    public UserResponse createInternalUser(String keycloakId, String email, String username) {
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException(409, "邮箱已存在");
+        }
+
+        User user = User.builder()
+                .keycloakId(keycloakId)
+                .email(email)
+                .username(username)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -45,6 +62,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(404, "用户不存在"));
+        return toUserResponse(user);
+    }
+
+    @Override
+    public UserResponse getUserByKeycloakId(String keycloakId) {
+        User user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new BusinessException(404, "用户不存在"));
         return toUserResponse(user);
     }
@@ -69,6 +93,10 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setUsername(request.getUsername());
 
+        if (request.getKeycloakId() != null) {
+            user.setKeycloakId(request.getKeycloakId());
+        }
+
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             if (request.getOldPassword() == null ||
                 !passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
@@ -89,13 +117,21 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(id);
     }
 
+    @Override
+    public void deleteByKeycloakId(String keycloakId) {
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new BusinessException(404, "用户不存在"));
+        userRepository.delete(user);
+    }
+
     private UserResponse toUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
+                .keycloakId(user.getKeycloakId())
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
+                .createdTime(user.getCreatedTime())
+                .updatedTime(user.getUpdatedTime())
                 .build();
     }
 }

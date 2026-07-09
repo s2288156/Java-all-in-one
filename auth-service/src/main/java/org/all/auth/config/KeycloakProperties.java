@@ -14,4 +14,6 @@ public class KeycloakProperties {
     private String clientId;
     private String clientSecret;
     private String tokenUri;
+    private String adminClientId = "admin-cli";
+    private String adminClientSecret;
 }

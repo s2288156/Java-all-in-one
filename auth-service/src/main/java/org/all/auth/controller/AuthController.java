@@ -1,11 +1,8 @@
 package org.all.auth.controller;
 
 import jakarta.validation.Valid;
-import org.all.auth.client.KeycloakClient;
-import org.all.auth.client.KeycloakClient.KeycloakTokenResponse;
-import org.all.auth.dto.LoginRequest;
-import org.all.auth.dto.LoginResponse;
-import org.all.auth.dto.RefreshTokenRequest;
+import org.all.auth.dto.*;
+import org.all.auth.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,32 +10,34 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final KeycloakClient keycloakClient;
+    private final AuthService authService;
 
-    public AuthController(KeycloakClient keycloakClient) {
-        this.keycloakClient = keycloakClient;
+    public AuthController(AuthService authService) {
+        this.authService = authService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        KeycloakTokenResponse response = keycloakClient.getToken(request.getEmail(), request.getPassword());
-        LoginResponse loginResponse = LoginResponse.builder()
-                .token(response.getAccess_token())
-                .tokenType(response.getToken_type())
-                .expiresIn(response.getExpires_in())
-                .build();
-        return ResponseEntity.ok(loginResponse);
+        LoginResponse response = authService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+        LoginResponse response = authService.register(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
-        KeycloakTokenResponse response = keycloakClient.refreshToken(request.getRefreshToken());
-        LoginResponse loginResponse = LoginResponse.builder()
-                .token(response.getAccess_token())
-                .tokenType(response.getToken_type())
-                .expiresIn(response.getExpires_in())
-                .build();
-        return ResponseEntity.ok(loginResponse);
+        LoginResponse response = authService.refresh(request.getRefreshToken());
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestHeader("X-User-Id") String userId) {
+        authService.logout(userId);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/health")

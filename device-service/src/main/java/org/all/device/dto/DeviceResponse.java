@@ -39,7 +39,7 @@ public class DeviceResponse {
 
     private LocalDateTime lastHeartbeat;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime createdTime;
 
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedTime;
 }
