@@ -4,12 +4,19 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.all.auth.config.KeycloakProperties;
+import org.all.common.exception.BusinessException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
@@ -19,8 +26,11 @@ import java.util.Map;
 @Component
 public class KeycloakClient {
 
+    private static final Logger log = LoggerFactory.getLogger(KeycloakClient.class);
+
     private final RestTemplate restTemplate;
     private final KeycloakProperties keycloakProperties;
+    private final ObjectMapper objectMapper;
 
     private String adminAccessToken;
     private Instant adminTokenExpiresAt = Instant.MIN;
@@ -28,6 +38,7 @@ public class KeycloakClient {
     public KeycloakClient(KeycloakProperties keycloakProperties) {
         this.keycloakProperties = keycloakProperties;
         this.restTemplate = new RestTemplate();
+        this.objectMapper = new ObjectMapper();
     }
 
     // ========== OIDC Token Endpoints ==========
@@ -84,6 +95,34 @@ public class KeycloakClient {
             return adminAccessToken;
         }
 
+        String tokenUri = keycloakProperties.getTokenUri();
+        log.info("Requesting admin token from: {}", tokenUri);
+
+        // Try client_credentials first
+        try {
+            return requestClientCredentialsToken(tokenUri);
+        } catch (HttpClientErrorException e) {
+            log.warn("client_credentials grant failed (status={}): {}. Trying password grant.",
+                    e.getStatusCode(), parseKeycloakError(e));
+        }
+
+        // Fallback to password grant
+        String adminUsername = keycloakProperties.getAdminUsername();
+        String adminPassword = keycloakProperties.getAdminPassword();
+        if (adminUsername != null && !adminUsername.isEmpty()
+                && adminPassword != null && !adminPassword.isEmpty()) {
+            try {
+                return requestPasswordToken(tokenUri, adminUsername, adminPassword);
+            } catch (HttpClientErrorException e) {
+                String detail = parseKeycloakError(e);
+                throw new BusinessException(500, "获取 Keycloak 管理员 token 失败: " + detail);
+            }
+        }
+
+        throw new BusinessException(500, "获取 Keycloak 管理员 token 失败: client_credentials 被拒绝，且未配置 admin 用户名/密码");
+    }
+
+    private String requestClientCredentialsToken(String tokenUri) {
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "client_credentials");
         formData.add("client_id", keycloakProperties.getAdminClientId());
@@ -93,17 +132,44 @@ public class KeycloakClient {
             formData.add("client_secret", adminSecret);
         }
 
+        return postToken(tokenUri, formData);
+    }
+
+    private String requestPasswordToken(String tokenUri, String username, String password) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("grant_type", "password");
+        formData.add("client_id", keycloakProperties.getAdminClientId());
+        formData.add("username", username);
+        formData.add("password", password);
+
+        String adminSecret = keycloakProperties.getAdminClientSecret();
+        if (adminSecret != null && !adminSecret.isEmpty()) {
+            formData.add("client_secret", adminSecret);
+        }
+
+        return postToken(tokenUri, formData);
+    }
+
+    private String postToken(String tokenUri, MultiValueMap<String, String> formData) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formData, headers);
-        ResponseEntity<KeycloakTokenResponse> response = restTemplate.postForEntity(
-                keycloakProperties.getTokenUri(), request, KeycloakTokenResponse.class);
+        try {
+            ResponseEntity<KeycloakTokenResponse> response = restTemplate.postForEntity(
+                    tokenUri, request, KeycloakTokenResponse.class);
 
-        KeycloakTokenResponse body = response.getBody();
-        adminAccessToken = body.getAccess_token();
-        adminTokenExpiresAt = Instant.now().plusSeconds(body.getExpires_in());
-        return adminAccessToken;
+            KeycloakTokenResponse body = response.getBody();
+            adminAccessToken = body.getAccess_token();
+            adminTokenExpiresAt = Instant.now().plusSeconds(body.getExpires_in());
+            return adminAccessToken;
+        } catch (HttpClientErrorException e) {
+            throw e; // let caller handle
+        } catch (HttpServerErrorException e) {
+            throw new BusinessException(500, "Keycloak 服务器错误: " + e.getResponseBodyAsString());
+        } catch (ResourceAccessException e) {
+            throw new BusinessException(500, "无法连接到 Keycloak: " + e.getMessage());
+        }
     }
 
     private HttpHeaders adminHeaders() {
@@ -145,11 +211,18 @@ public class KeycloakClient {
     public List<RealmUser> getAllUsers(int first, int max) {
         HttpHeaders headers = adminHeaders();
         HttpEntity<Void> request = new HttpEntity<>(headers);
-        ResponseEntity<List<RealmUser>> response = restTemplate.exchange(
-                adminBaseUrl() + "/users?first=" + first + "&max=" + max,
-                HttpMethod.GET, request,
-                new org.springframework.core.ParameterizedTypeReference<>() {});
-        return response.getBody();
+        try {
+            ResponseEntity<List<RealmUser>> response = restTemplate.exchange(
+                    adminBaseUrl() + "/users?first=" + first + "&max=" + max,
+                    HttpMethod.GET, request,
+                    new org.springframework.core.ParameterizedTypeReference<>() {});
+            return response.getBody();
+        } catch (HttpClientErrorException e) {
+            String detail = parseKeycloakError(e);
+            throw new BusinessException(500, "获取用户列表失败: " + detail);
+        } catch (ResourceAccessException e) {
+            throw new BusinessException(500, "无法连接到 Keycloak: " + e.getMessage());
+        }
     }
 
     public void updateUser(String userId, Map<String, Object> fields) {
@@ -236,6 +309,23 @@ public class KeycloakClient {
         HttpEntity<Void> request = new HttpEntity<>(headers);
         restTemplate.postForEntity(
                 adminBaseUrl() + "/users/" + userId + "/logout", request, Void.class);
+    }
+
+    // ========== Error Handling ==========
+
+    private String parseKeycloakError(HttpClientErrorException e) {
+        try {
+            JsonNode json = objectMapper.readTree(e.getResponseBodyAsString());
+            if (json.has("error_description")) {
+                return json.get("error_description").asText();
+            }
+            if (json.has("errorMessage")) {
+                return json.get("errorMessage").asText();
+            }
+            return e.getResponseBodyAsString();
+        } catch (Exception ignored) {
+            return e.getStatusText();
+        }
     }
 
     // ========== Inner DTOs ==========
