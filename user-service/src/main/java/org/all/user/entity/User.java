@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "user")
 @Data
 @Builder
 @NoArgsConstructor
@@ -25,9 +25,6 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String email;
-
-    @Column
-    private String password;
 
     @Column(nullable = false)
     private String username;

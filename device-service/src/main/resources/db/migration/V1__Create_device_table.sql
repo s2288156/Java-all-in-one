@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS `device` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `device_code` VARCHAR(64) NOT NULL COMMENT '设备编码',
+    `device_name` VARCHAR(128) NOT NULL COMMENT '设备名称',
+    `device_type` VARCHAR(64) NOT NULL COMMENT '设备类型',
+    `status` VARCHAR(32) NOT NULL COMMENT '设备状态',
+    `location` VARCHAR(255) DEFAULT NULL COMMENT '设备位置',
+    `ip_address` VARCHAR(64) DEFAULT NULL COMMENT 'IP地址',
+    `mac_address` VARCHAR(64) DEFAULT NULL COMMENT 'MAC地址',
+    `serial_number` VARCHAR(64) DEFAULT NULL COMMENT '序列号',
+    `manufacturer` VARCHAR(128) DEFAULT NULL COMMENT '制造商',
+    `model` VARCHAR(128) DEFAULT NULL COMMENT '设备型号',
+    `installation_date` DATETIME DEFAULT NULL COMMENT '安装日期',
+    `last_heartbeat` DATETIME DEFAULT NULL COMMENT '最后心跳时间',
+    `created_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_device_code` (`device_code`),
+    INDEX `idx_device_code` (`device_code`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_device_type` (`device_type`),
+    INDEX `idx_location` (`location`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='设备表';

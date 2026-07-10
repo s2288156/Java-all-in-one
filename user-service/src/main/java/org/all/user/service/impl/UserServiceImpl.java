@@ -10,7 +10,6 @@ import org.all.user.service.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.stream.Collectors;
@@ -19,11 +18,9 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -34,7 +31,6 @@ public class UserServiceImpl implements UserService {
 
         User user = User.builder()
                 .email(request.getEmail())
-                .password(request.getPassword() != null ? passwordEncoder.encode(request.getPassword()) : null)
                 .username(request.getUsername())
                 .keycloakId(request.getKeycloakId())
                 .build();
@@ -95,14 +91,6 @@ public class UserServiceImpl implements UserService {
 
         if (request.getKeycloakId() != null) {
             user.setKeycloakId(request.getKeycloakId());
-        }
-
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            if (request.getOldPassword() == null ||
-                !passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-                throw new BusinessException(400, "旧密码错误");
-            }
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
         User updatedUser = userRepository.save(user);
