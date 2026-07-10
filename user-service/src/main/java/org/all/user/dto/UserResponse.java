@@ -15,8 +15,9 @@ public class UserResponse {
 
     private Long id;
     private String keycloakId;
-    private String email;
     private String username;
+    private String email;
+    private String phone;
     private LocalDateTime createdTime;
     private LocalDateTime updatedTime;
 }

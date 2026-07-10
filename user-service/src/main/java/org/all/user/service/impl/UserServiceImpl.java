@@ -25,13 +25,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse createUser(UserRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new BusinessException(409, "用户名已存在");
+        }
+        if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException(409, "邮箱已存在");
         }
 
         User user = User.builder()
-                .email(request.getEmail())
                 .username(request.getUsername())
+                .email(request.getEmail())
+                .phone(request.getPhone())
                 .keycloakId(request.getKeycloakId())
                 .build();
 
@@ -40,15 +44,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse createInternalUser(String keycloakId, String email, String username) {
-        if (userRepository.existsByEmail(email)) {
+    public UserResponse createInternalUser(String keycloakId, String email, String username, String phone) {
+        if (userRepository.existsByUsername(username)) {
+            throw new BusinessException(409, "用户名已存在");
+        }
+        if (email != null && userRepository.existsByEmail(email)) {
             throw new BusinessException(409, "邮箱已存在");
         }
 
         User user = User.builder()
                 .keycloakId(keycloakId)
-                .email(email)
                 .username(username)
+                .email(email)
+                .phone(phone)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -86,8 +94,18 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(404, "用户不存在"));
 
-        user.setEmail(request.getEmail());
+        if (!user.getUsername().equals(request.getUsername())
+                && userRepository.existsByUsername(request.getUsername())) {
+            throw new BusinessException(409, "用户名已存在");
+        }
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())
+                && userRepository.existsByEmail(request.getEmail())) {
+            throw new BusinessException(409, "邮箱已存在");
+        }
+
         user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
 
         if (request.getKeycloakId() != null) {
             user.setKeycloakId(request.getKeycloakId());
@@ -116,8 +134,9 @@ public class UserServiceImpl implements UserService {
         return UserResponse.builder()
                 .id(user.getId())
                 .keycloakId(user.getKeycloakId())
-                .email(user.getEmail())
                 .username(user.getUsername())
+                .email(user.getEmail())
+                .phone(user.getPhone())
                 .createdTime(user.getCreatedTime())
                 .updatedTime(user.getUpdatedTime())
                 .build();

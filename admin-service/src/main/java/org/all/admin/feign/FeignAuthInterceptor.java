@@ -13,7 +13,7 @@ import java.util.List;
 public class FeignAuthInterceptor implements RequestInterceptor {
 
     private static final List<String> HEADER_NAMES = List.of(
-            "X-User-Id", "X-User-Email", "X-User-Roles", "Authorization"
+            "X-User-Id", "X-Username", "X-User-Email", "X-User-Roles", "Authorization"
     );
 
     @Override

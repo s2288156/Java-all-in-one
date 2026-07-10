@@ -17,11 +17,13 @@ import java.util.List;
 public class UserContext {
 
     private String userId;
+    private String username;
     private String email;
     private List<String> roles;
 
     public static UserContext fromHeaders(HttpHeaders headers) {
         String userId = headers.getFirst("X-User-Id");
+        String username = headers.getFirst("X-Username");
         String email = headers.getFirst("X-User-Email");
         String rolesStr = headers.getFirst("X-User-Roles");
 
@@ -31,6 +33,7 @@ public class UserContext {
 
         return UserContext.builder()
                 .userId(userId)
+                .username(username)
                 .email(email)
                 .roles(roles)
                 .build();

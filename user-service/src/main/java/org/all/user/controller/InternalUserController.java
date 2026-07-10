@@ -23,7 +23,8 @@ public class InternalUserController {
         UserResponse user = userService.createInternalUser(
                 body.get("keycloakId"),
                 body.get("email"),
-                body.get("username")
+                body.get("username"),
+                body.get("phone")
         );
         return ResponseEntity.status(201).body(ApiResponse.ok(user));
     }

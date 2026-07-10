@@ -226,6 +226,15 @@ public class KeycloakClient {
         return response.getBody();
     }
 
+    public List<RealmUser> getUserByUsername(String username) {
+        HttpHeaders headers = adminHeaders();
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+        ResponseEntity<List<RealmUser>> response = restTemplate.exchange(
+                adminBaseUrl() + "/users?username=" + username, HttpMethod.GET, request,
+                new org.springframework.core.ParameterizedTypeReference<>() {});
+        return response.getBody();
+    }
+
     public List<RealmUser> getAllUsers(int first, int max) {
         HttpHeaders headers = adminHeaders();
         HttpEntity<Void> request = new HttpEntity<>(headers);
@@ -373,6 +382,7 @@ public class KeycloakClient {
         private Boolean enabled;
         private Boolean emailVerified;
         private List<CredentialRepresentation> credentials;
+        private Map<String, List<String>> attributes;
     }
 
     @Data

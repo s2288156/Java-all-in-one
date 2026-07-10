@@ -33,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest request) {
-        KeycloakTokenResponse response = keycloakClient.getToken(request.getEmail(), request.getPassword());
+        KeycloakTokenResponse response = keycloakClient.getToken(request.getUsername(), request.getPassword());
         return LoginResponse.builder()
                 .token(response.getAccess_token())
                 .refreshToken(response.getRefresh_token())
@@ -49,18 +49,24 @@ public class AuthServiceImpl implements AuthService {
         credential.setValue(request.getPassword());
         credential.setTemporary(false);
 
+        Map<String, List<String>> attributes = new java.util.HashMap<>();
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            attributes.put("phone", List.of(request.getPhone()));
+        }
+
         RealmUser user = RealmUser.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .enabled(true)
                 .emailVerified(false)
                 .credentials(List.of(credential))
+                .attributes(attributes.isEmpty() ? null : attributes)
                 .build();
         String keycloakId = keycloakClient.createUser(user);
 
-        syncUserToUserService(keycloakId, request.getEmail(), request.getUsername());
+        syncUserToUserService(keycloakId, request.getEmail(), request.getUsername(), request.getPhone());
 
-        KeycloakTokenResponse tokenResponse = keycloakClient.getToken(request.getEmail(), request.getPassword());
+        KeycloakTokenResponse tokenResponse = keycloakClient.getToken(request.getUsername(), request.getPassword());
         return LoginResponse.builder()
                 .token(tokenResponse.getAccess_token())
                 .refreshToken(tokenResponse.getRefresh_token())
@@ -69,12 +75,20 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    private void syncUserToUserService(String keycloakId, String email, String username) {
+    private void syncUserToUserService(String keycloakId, String email, String username, String phone) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(
-                    Map.of("keycloakId", keycloakId, "email", email, "username", username), headers);
+            Map<String, String> body = new java.util.HashMap<>();
+            body.put("keycloakId", keycloakId);
+            body.put("username", username);
+            if (email != null) {
+                body.put("email", email);
+            }
+            if (phone != null) {
+                body.put("phone", phone);
+            }
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
             restTemplate.postForEntity(userServiceUrl + "/api/users/internal", request, Void.class);
         } catch (Exception e) {
             log.warn("Failed to sync user to user-service: {}", e.getMessage());

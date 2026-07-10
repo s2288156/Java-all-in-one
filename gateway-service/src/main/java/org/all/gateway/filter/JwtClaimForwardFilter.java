@@ -24,6 +24,7 @@ public class JwtClaimForwardFilter implements GlobalFilter, Ordered {
                     ServerHttpRequest request = exchange.getRequest().mutate()
                             .header("X-User-Id", jwt.getSubject())
                             .header("X-User-Email", jwt.getClaimAsString("email"))
+                            .header("X-Username", jwt.getClaimAsString("preferred_username"))
                             .header("X-User-Roles", extractRoles(jwt))
                             .build();
                     return chain.filter(exchange.mutate().request(request).build());

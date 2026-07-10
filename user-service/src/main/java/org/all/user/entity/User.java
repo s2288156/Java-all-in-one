@@ -23,11 +23,14 @@ public class User {
     @Column(name = "keycloak_id", unique = true)
     private String keycloakId;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String username;
+
+    @Column(length = 20)
+    private String phone;
 
     @Column(name = "created_time")
     private LocalDateTime createdTime;
