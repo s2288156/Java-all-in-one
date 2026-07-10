@@ -93,6 +93,13 @@ Shared library providing `ApiResponse`, `PageResponse`, `GlobalExceptionHandler`
 
 Standalone module for MQTT and Modbus TCP demos. Not part of the Spring Cloud ecosystem. Has its own `mainClass` config.
 
+## Prohibited Actions
+
+- Do NOT auto `git commit` or `git push` without explicit user request
+- Do NOT modify `pom.xml` dependency versions without user approval
+- Do NOT run `mvn deploy` or any publish-to-remote commands
+- Do NOT delete or rewrite git history
+
 ## API Documentation
 
 Swagger UI available at `http://127.0.0.1:{port}/swagger-ui.html` for each service. OpenAPI JSON at `/v3/api-docs`.
