@@ -6,6 +6,7 @@ import org.all.auth.client.KeycloakClient.RealmUser;
 import org.all.auth.dto.*;
 import org.all.auth.service.AuthService;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -29,11 +30,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse register(RegisterRequest request) {
+        KeycloakClient.CredentialRepresentation credential = new KeycloakClient.CredentialRepresentation();
+        credential.setType("password");
+        credential.setValue(request.getPassword());
+        credential.setTemporary(false);
+
         RealmUser user = RealmUser.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .enabled(true)
                 .emailVerified(false)
+                .credentials(List.of(credential))
                 .build();
         keycloakClient.createUser(user);
 

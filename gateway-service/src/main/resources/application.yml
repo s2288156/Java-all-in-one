@@ -6,6 +6,11 @@ spring:
     name: gateway-service
   config:
     import: nacos:gateway-service.yml
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://192.168.50.17:18080/realms/master
   cloud:
     nacos:
       discovery:

@@ -60,10 +60,17 @@ public class KeycloakClient {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formData, headers);
-        ResponseEntity<KeycloakTokenResponse> response = restTemplate.postForEntity(
-                keycloakProperties.getTokenUri(), request, KeycloakTokenResponse.class);
-
-        return response.getBody();
+        try {
+            ResponseEntity<KeycloakTokenResponse> response = restTemplate.postForEntity(
+                    keycloakProperties.getTokenUri(), request, KeycloakTokenResponse.class);
+            return response.getBody();
+        } catch (HttpClientErrorException e) {
+            String detail = parseKeycloakError(e);
+            throw new BusinessException(e.getStatusCode().value(),
+                    "获取 token 失败: " + detail);
+        } catch (ResourceAccessException e) {
+            throw new BusinessException(500, "无法连接到 Keycloak: " + e.getMessage());
+        }
     }
 
     public KeycloakTokenResponse refreshToken(String refreshToken) {
@@ -188,7 +195,15 @@ public class KeycloakClient {
     public void createUser(RealmUser user) {
         HttpHeaders headers = adminHeaders();
         HttpEntity<RealmUser> request = new HttpEntity<>(user, headers);
-        restTemplate.postForEntity(adminBaseUrl() + "/users", request, Void.class);
+        try {
+            restTemplate.postForEntity(adminBaseUrl() + "/users", request, Void.class);
+        } catch (HttpClientErrorException e) {
+            String detail = parseKeycloakError(e);
+            throw new BusinessException(e.getStatusCode().value(),
+                    "创建用户失败: " + detail);
+        } catch (ResourceAccessException e) {
+            throw new BusinessException(500, "无法连接到 Keycloak: " + e.getMessage());
+        }
     }
 
     public RealmUser getUser(String userId) {
@@ -354,6 +369,7 @@ public class KeycloakClient {
         private String lastName;
         private Boolean enabled;
         private Boolean emailVerified;
+        private List<CredentialRepresentation> credentials;
     }
 
     @Data
