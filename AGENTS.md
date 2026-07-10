@@ -78,6 +78,8 @@ Flyway manages schema. Migration files live at `<service>/src/main/resources/db/
 ### Database Conventions
 
 - Column names: `created_time` / `updated_time` (not `created_at` / `updated_at`) across ALL tables
+- Follow Alibaba manual: `idx_` prefix for indexes, `uk_` for unique constraints
+- Use `utf8mb4` charset for all tables
 
 ### Service Communication
 
@@ -92,6 +94,51 @@ Shared library providing `ApiResponse`, `PageResponse`, `GlobalExceptionHandler`
 ### demo-module
 
 Standalone module for MQTT and Modbus TCP demos. Not part of the Spring Cloud ecosystem. Has its own `mainClass` config.
+
+## Development Standards (Alibaba Java Manual)
+
+All code must follow [Alibaba Java Development Manual](https://github.com/alibaba/p3c). Key rules for this project:
+
+### Naming
+
+- Class names: UpperCamelCase (`UserService`, `DeviceController`)
+- Method names: lowerCamelCase (`getUserById`, `createDevice`)
+- Constants: UPPER_SNAKE_CASE (`MAX_RETRY_COUNT`)
+- Package names: lowercase (`org.all.user.service`)
+- Boolean fields: prefixed with `is`/`has`/`can` (`isActive`, `hasPermission`)
+
+### Code Style
+
+- One class per file; inner classes only when truly private
+- No wildcard imports (`import java.util.*` is forbidden)
+- Override annotations required (`@Override`)
+- `@Deprecated` annotation + Javadoc required for deprecated methods
+- Methods should not exceed 80 lines; classes should not exceed 500 lines
+
+### Exception Handling
+
+- Catch specific exceptions, never `catch (Exception e)`
+- Do not swallow exceptions silently; log or rethrow
+- Use `BusinessException` (from `common-lib`) for business errors
+- Return `ApiResponse` with proper error codes, never expose stack traces
+
+### Logging
+
+- Use SLF4J (`private static final Logger log = LoggerFactory.getLogger(Xxx.class)`)
+- Use `log.error("msg", e)` with exception as last param (never `log.error(e.getMessage())`)
+- Do not print to `System.out` / `System.err`
+- Log level: `ERROR` for system failures, `WARN` for recoverable issues, `INFO` for business events, `DEBUG` for diagnostics
+
+### Database Design
+
+- Table/column names: lowercase + underscores (`user_profile`, `created_time`)
+- Primary key: `id BIGINT AUTO_INCREMENT`
+- Required columns: `created_time DATETIME NOT NULL`, `updated_time DATETIME NOT NULL`
+- Indexes: prefix `idx_` for single column, `uk_` for unique
+- `VARCHAR` length must be explicitly declared; do not use `TEXT` for small fields
+- Do NOT use reserved keywords as column names (`order`, `status`, `key`)
+- Use `utf8mb4` charset for all tables
+- Foreign keys: use application-level joins, NOT database-level foreign keys
 
 ## Prohibited Actions
 
