@@ -31,4 +31,3 @@ keycloak:
   admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:}
   admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
   admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
-  token-uri: ${keycloak.server-url}/realms/${keycloak.realm}/protocol/openid-connect/token
