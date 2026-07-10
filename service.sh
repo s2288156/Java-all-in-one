@@ -79,10 +79,27 @@ do_start() {
         return 1
     fi
 
-    # 在子 shell 中后台启动，脱离终端，日志由 Logback 写入 /tmp/zen/logs/
+    # 先构建 jar（跳过测试），再用 java -jar 直接运行（单进程，kill 彻底）
+    echo -n "  构建 $svc ... "
+    (cd "$project_dir" && mvn package -DskipTests -q 2>/dev/null)
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}构建失败${NC}"
+        return 1
+    fi
+    echo -e "${GREEN}完成${NC}"
+
+    # 查找构建好的 jar
+    local jar_file
+    jar_file=$(find "$project_dir/target" -name "*.jar" -not -name "*-sources.jar" -not -name "*-javadoc.jar" | head -1)
+    if [[ -z "$jar_file" ]]; then
+        echo -e "  ${RED}✗ $svc${NC} 未找到 jar 文件"
+        return 1
+    fi
+
+    # 直接用 java -jar 启动（单进程，PID 追踪准确）
     (
         cd "$project_dir"
-        setsid nohup mvn spring-boot:run -q &>/dev/null &
+        nohup java -jar "$jar_file" &>/dev/null &
         echo $!
     ) > "$(pid_file "$svc")"
 
