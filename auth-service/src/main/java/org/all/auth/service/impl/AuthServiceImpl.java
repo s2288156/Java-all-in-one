@@ -3,6 +3,7 @@ package org.all.auth.service.impl;
 import org.all.auth.client.KeycloakClient;
 import org.all.auth.client.KeycloakClient.KeycloakTokenResponse;
 import org.all.auth.client.KeycloakClient.RealmUser;
+import org.all.auth.client.KeycloakClient.RoleRepresentation;
 import org.all.auth.dto.*;
 import org.all.auth.service.AuthService;
 import org.slf4j.Logger;
@@ -64,6 +65,8 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         String keycloakId = keycloakClient.createUser(user);
 
+        assignDefaultRole(keycloakId, request.getUsername());
+
         syncUserToUserService(keycloakId, request.getEmail(), request.getUsername(), request.getPhone());
 
         KeycloakTokenResponse tokenResponse = keycloakClient.getToken(request.getUsername(), request.getPassword());
@@ -92,6 +95,21 @@ public class AuthServiceImpl implements AuthService {
             restTemplate.postForEntity(userServiceUrl + "/api/users/internal", request, Void.class);
         } catch (Exception e) {
             log.warn("Failed to sync user to user-service: {}", e.getMessage());
+        }
+    }
+
+    private void assignDefaultRole(String keycloakId, String username) {
+        try {
+            List<RoleRepresentation> roles = keycloakClient.getRoles();
+            RoleRepresentation userRole = roles.stream()
+                    .filter(r -> "ROLE_USER".equals(r.getName()))
+                    .findFirst()
+                    .orElse(null);
+            if (userRole != null) {
+                keycloakClient.assignUserRoles(keycloakId, List.of(userRole));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to assign default role to user {}: {}", username, e.getMessage());
         }
     }
 
