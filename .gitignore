@@ -36,6 +36,9 @@ build/
 .trae/
 .mimocode/
 
+### Runtime ###
+.pids/
+
 ### Maven ###
 *.jar
 *.war
