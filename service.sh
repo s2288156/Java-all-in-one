@@ -6,7 +6,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PID_DIR="$SCRIPT_DIR/.pids"
-LOG_DIR="$SCRIPT_DIR/logs"
 
 # 可运行的 Spring Boot 服务及其端口
 declare -A SERVICES=(
@@ -42,15 +41,11 @@ NC='\033[0m'
 # ---------- 工具函数 ----------
 
 init_dirs() {
-    mkdir -p "$PID_DIR" "$LOG_DIR"
+    mkdir -p "$PID_DIR"
 }
 
 pid_file() {
     echo "$PID_DIR/$1.pid"
-}
-
-log_file() {
-    echo "$LOG_DIR/$1.log"
 }
 
 is_running() {
@@ -84,18 +79,16 @@ do_start() {
         return 1
     fi
 
-    # 在子 shell 中后台启动，脱离终端，日志写入 logs/
+    # 在子 shell 中后台启动，脱离终端，日志由 Logback 写入 /tmp/zen/logs/
     (
         cd "$project_dir"
-        setsid nohup mvn spring-boot:run -q \
-            >> "$(log_file "$svc")" 2>&1 &
+        setsid nohup mvn spring-boot:run -q &>/dev/null &
         echo $!
     ) > "$(pid_file "$svc")"
 
     local pid
     pid=$(get_pid "$svc")
-    local port="${SERVICES[$svc]}"
-    echo -e "  ${GREEN}● $svc${NC} 已启动  PID=$pid  日志=$(log_file "$svc")"
+    echo -e "  ${GREEN}● $svc${NC} 已启动  PID=$pid"
 }
 
 do_stop() {
