@@ -95,7 +95,9 @@ Standalone module for MQTT and Modbus TCP demos. Not part of the Spring Cloud ec
 
 ## Prohibited Actions
 
-- Do NOT auto `git commit` or `git push` without explicit user request
+- Do NOT run `git commit` unless the user's message literally contains "commit" or "提交"
+- Do NOT run `git push` or `git add .` or `git add -A` without explicit user request
+- Do NOT run `git add` on files the user did not specifically mention
 - Do NOT modify `pom.xml` dependency versions without user approval
 - Do NOT run `mvn deploy` or any publish-to-remote commands
 - Do NOT delete or rewrite git history
