@@ -192,11 +192,14 @@ public class KeycloakClient {
 
     // ========== User Management (Admin API) ==========
 
-    public void createUser(RealmUser user) {
+    public String createUser(RealmUser user) {
         HttpHeaders headers = adminHeaders();
         HttpEntity<RealmUser> request = new HttpEntity<>(user, headers);
         try {
-            restTemplate.postForEntity(adminBaseUrl() + "/users", request, Void.class);
+            ResponseEntity<Void> response = restTemplate.postForEntity(
+                    adminBaseUrl() + "/users", request, Void.class);
+            String location = response.getHeaders().getLocation().getPath();
+            return location.substring(location.lastIndexOf('/') + 1);
         } catch (HttpClientErrorException e) {
             String detail = parseKeycloakError(e);
             throw new BusinessException(e.getStatusCode().value(),

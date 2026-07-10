@@ -5,16 +5,30 @@ import org.all.auth.client.KeycloakClient.KeycloakTokenResponse;
 import org.all.auth.client.KeycloakClient.RealmUser;
 import org.all.auth.dto.*;
 import org.all.auth.service.AuthService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AuthServiceImpl implements AuthService {
 
-    private final KeycloakClient keycloakClient;
+    private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
 
-    public AuthServiceImpl(KeycloakClient keycloakClient) {
+    private final KeycloakClient keycloakClient;
+    private final RestTemplate restTemplate;
+    private final String userServiceUrl;
+
+    public AuthServiceImpl(KeycloakClient keycloakClient,
+                           @Value("${user-service.url}") String userServiceUrl) {
         this.keycloakClient = keycloakClient;
+        this.restTemplate = new RestTemplate();
+        this.userServiceUrl = userServiceUrl;
     }
 
     @Override
@@ -42,7 +56,9 @@ public class AuthServiceImpl implements AuthService {
                 .emailVerified(false)
                 .credentials(List.of(credential))
                 .build();
-        keycloakClient.createUser(user);
+        String keycloakId = keycloakClient.createUser(user);
+
+        syncUserToUserService(keycloakId, request.getEmail(), request.getUsername());
 
         KeycloakTokenResponse tokenResponse = keycloakClient.getToken(request.getEmail(), request.getPassword());
         return LoginResponse.builder()
@@ -51,6 +67,18 @@ public class AuthServiceImpl implements AuthService {
                 .tokenType(tokenResponse.getToken_type())
                 .expiresIn(tokenResponse.getExpires_in())
                 .build();
+    }
+
+    private void syncUserToUserService(String keycloakId, String email, String username) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(
+                    Map.of("keycloakId", keycloakId, "email", email, "username", username), headers);
+            restTemplate.postForEntity(userServiceUrl + "/api/users/internal", request, Void.class);
+        } catch (Exception e) {
+            log.warn("Failed to sync user to user-service: {}", e.getMessage());
+        }
     }
 
     @Override

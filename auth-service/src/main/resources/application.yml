@@ -31,3 +31,6 @@ keycloak:
   admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:auth-service-secret}
   admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
   admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+
+user-service:
+  url: ${USER_SERVICE_URL:http://localhost:28082}
