@@ -24,26 +24,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse createUser(UserRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new BusinessException(409, "用户名已存在");
-        }
-        if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException(409, "邮箱已存在");
-        }
-
-        User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .keycloakId(request.getKeycloakId())
-                .build();
-
-        User savedUser = userRepository.save(user);
-        return toUserResponse(savedUser);
-    }
-
-    @Override
     public UserResponse createInternalUser(String keycloakId, String email, String username, String phone) {
         if (userRepository.existsByUsername(username)) {
             throw new BusinessException(409, "用户名已存在");

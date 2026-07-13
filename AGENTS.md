@@ -12,7 +12,7 @@ Spring Boot 4.0.7 + Spring Cloud 2025.1.2 + Spring Cloud Alibaba 2025.1.0.0 micr
 | auth-service | 28081 | WebMVC |
 | user-service | 28082 | WebMVC + JPA |
 | device-service | 28084 | WebMVC + JPA |
-| admin-service | 28085 | WebMVC (proxy layer) |
+| admin-service | 28085 | WebMVC (BFF layer) |
 | common-lib | - | Library (not runnable) |
 | demo-module | - | Standalone (MQTT/Modbus demos) |
 
@@ -76,6 +76,7 @@ Default roles (`ROLE_USER`, `ROLE_ADMIN`) are ensured to exist in Keycloak on au
 user-service is a **supplementary business data store only** — Keycloak is the primary user store.
 - `keycloak_id` column links local users to Keycloak identities
 - `InternalUserController` provides endpoints for auth-service to sync users
+- Public CRUD endpoints (`/api/users`) have been removed; only internal endpoints (`/api/users/internal/*`) remain
 
 ### Nacos Config Import
 
@@ -97,9 +98,11 @@ Flyway manages schema. Migration files live at `<service>/src/main/resources/db/
 
 ### Service Communication
 
-- `admin-service` → `user-service` via OpenFeign (`UserServiceClient`)
+- `admin-service` → `auth-service` via OpenFeign (`AuthServiceClient`) for Keycloak user/role management
+- `admin-service` → `user-service` via OpenFeign (`UserServiceClient`) for local user data CRUD
 - `gateway-service` → all services via Nacos discovery + `lb://` URIs, validates JWT via Keycloak JWKS
-- `auth-service` → Keycloak via `RestTemplate` for token operations
+- `auth-service` → Keycloak via `RestTemplate` for token/user/role operations
+- `auth-service` → `user-service` via `RestTemplate` for user sync on registration
 
 ### common-lib
 

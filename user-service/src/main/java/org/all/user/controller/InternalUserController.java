@@ -1,6 +1,9 @@
 package org.all.user.controller;
 
+import jakarta.validation.Valid;
 import org.all.common.model.ApiResponse;
+import org.all.common.model.PageResponse;
+import org.all.user.dto.UserRequest;
 import org.all.user.dto.UserResponse;
 import org.all.user.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +41,34 @@ public class InternalUserController {
     @DeleteMapping("/keycloak/{keycloakId}")
     public ResponseEntity<ApiResponse<Void>> deleteByKeycloakId(@PathVariable String keycloakId) {
         userService.deleteByKeycloakId(keycloakId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PageResponse<UserResponse> users = userService.getAllUsers(page, size);
+        return ResponseEntity.ok(ApiResponse.ok(users));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
+        UserResponse user = userService.getUserById(id);
+        return ResponseEntity.ok(ApiResponse.ok(user));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserRequest request) {
+        UserResponse user = userService.updateUser(id, request);
+        return ResponseEntity.ok(ApiResponse.ok(user));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

@@ -5,7 +5,6 @@ import org.all.user.dto.UserRequest;
 import org.all.user.dto.UserResponse;
 
 public interface UserService {
-    UserResponse createUser(UserRequest request);
     UserResponse createInternalUser(String keycloakId, String email, String username, String phone);
     UserResponse getUserById(Long id);
     UserResponse getUserByKeycloakId(String keycloakId);
