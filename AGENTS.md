@@ -47,15 +47,29 @@ Services won't start without MySQL, Nacos, and Keycloak running. See `.mimocode/
 ### Auth Architecture (Keycloak)
 
 - **auth-service** is the **single gateway** for all Keycloak operations (token, user management, role management)
+- Login and registration use **username** (not email). Email and phone are optional fields for password recovery
 - Token endpoints: `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/register`, `POST /api/auth/refresh`
 - User endpoints: `/api/auth/users/*` (admin CRUD via Keycloak Admin API)
 - Role endpoints: `/api/auth/roles/*` (admin CRUD via Keycloak Admin API)
 - Uses Keycloak ROPC grant for login and token refresh
 - auth-service must include `admin-client-id` and `admin-client-secret` in config (via `application.yml` or Nacos)
+- Phone is stored in Keycloak's `attributes` map (not a top-level `UserRepresentation` field)
+- Default roles (`ROLE_USER`, `ROLE_ADMIN`) are auto-created in Keycloak on startup by `RoleInitializer`
+- New users are automatically assigned `ROLE_USER` on registration
 
 ### Gateway JWT Claim Forwarding
 
 Gateway (`JwtClaimForwardFilter`) extracts JWT claims and forwards as HTTP headers: `X-User-Id`, `X-User-Email`, `X-User-Roles` (comma-separated), `X-Username`. Use `UserContext` (from `common-lib`) to parse these in downstream services.
+
+### RBAC (Role-Based Access Control)
+
+Two levels of role-based authorization:
+
+1. **Gateway-level**: Keycloak `realm_access.roles` is extracted into `GrantedAuthority` objects for `hasRole()` checks. Admin routes (`/api/admin/**`, `/api/auth/admin/**`) require `ROLE_ADMIN`.
+
+2. **Endpoint-level**: `@RequireRole(roles = "ADMIN")` annotation in downstream services. The `RoleAuthorizationInterceptor` (auto-registered via common-lib) checks the `X-User-Roles` header forwarded by the gateway.
+
+Default roles (`ROLE_USER`, `ROLE_ADMIN`) are ensured to exist in Keycloak on auth-service startup via `RoleInitializer`. New users get `ROLE_USER` automatically.
 
 ### User-Service Keycloak Integration
 
@@ -89,7 +103,7 @@ Flyway manages schema. Migration files live at `<service>/src/main/resources/db/
 
 ### common-lib
 
-Shared library providing `ApiResponse`, `PageResponse`, `GlobalExceptionHandler`, `BusinessException`, `UserContext`. Services depend on it via Maven coordinates `org.all:common-lib`.
+Shared library providing `ApiResponse`, `PageResponse`, `GlobalExceptionHandler`, `BusinessException`, `UserContext`, `Roles`, `RequireRole`, `RoleAuthorizationInterceptor`. Services depend on it via Maven coordinates `org.all:common-lib`. Auto-config registers the role interceptor for all `/api/**` paths via `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`.
 
 ### demo-module
 
