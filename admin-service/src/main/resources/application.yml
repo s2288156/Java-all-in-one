@@ -5,7 +5,9 @@ spring:
   application:
     name: admin-service
   config:
-    import: nacos:admin-service.yml
+    import:
+      - nacos:shared.yml
+      - nacos:admin-service.yml
   cloud:
     nacos:
       discovery:
@@ -15,9 +17,3 @@ spring:
         server-addr: 127.0.0.1:8848
         namespace: public
         file-extension: yml
-
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html

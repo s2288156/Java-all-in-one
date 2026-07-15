@@ -1,0 +1,6 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_SERVER_URL:http://47.113.227.247:18080}/realms/${KEYCLOAK_REALM:master}

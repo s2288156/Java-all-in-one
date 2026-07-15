@@ -5,12 +5,9 @@ spring:
   application:
     name: gateway-service
   config:
-    import: nacos:gateway-service.yml
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://192.168.50.17:18080/realms/master
+    import:
+      - nacos:shared.yml
+      - nacos:gateway-service.yml
   cloud:
     nacos:
       discovery:
@@ -19,5 +16,5 @@ spring:
         ip: 192.168.50.17
       config:
         server-addr: 127.0.0.1:8848
-        file-extension: yml
         namespace: public
+        file-extension: yml

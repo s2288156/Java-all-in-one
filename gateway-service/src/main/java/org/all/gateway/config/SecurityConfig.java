@@ -30,17 +30,19 @@ public class SecurityConfig {
                     "/api/auth/register",
                     "/api/auth/refresh",
                     "/api/auth/health",
+                    "/api/devices/*/heartbeat",
                     "/actuator/**"
                 ).permitAll()
                 .pathMatchers("/api/admin/**").hasRole("ADMIN")
                 .pathMatchers("/api/auth/admin/**").hasRole("ADMIN")
+                .pathMatchers("/api/users/internal/**").hasRole("ADMIN")
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwt -> {
-                    Collection<GrantedAuthority> authorities = extractRoles(jwt);
-                    String principal = jwt.getClaimAsString("preferred_username");
-                    return Mono.just(new JwtAuthenticationToken(jwt, authorities, principal));
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(token -> {
+                    Collection<GrantedAuthority> authorities = extractRoles(token);
+                    String principal = token.getClaimAsString("preferred_username");
+                    return Mono.just(new JwtAuthenticationToken(token, authorities, principal));
                 }))
             );
 

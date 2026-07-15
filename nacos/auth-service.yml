@@ -1,0 +1,12 @@
+keycloak:
+  server-url: ${KEYCLOAK_SERVER_URL:http://47.113.227.247:18080}
+  realm: ${KEYCLOAK_REALM:master}
+  client-id: ${KEYCLOAK_CLIENT_ID:auth-service}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:auth-service-secret}
+  admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:auth-service}
+  admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:auth-service-secret}
+  admin-username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+
+user-service:
+  url: ${USER_SERVICE_URL:http://localhost:28082}
