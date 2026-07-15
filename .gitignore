@@ -73,6 +73,11 @@ docker-compose.override.yml
 ehthumbs.db
 Thumbs.db
 
+### Python ###
+__pycache__/
+*.pyc
+.pytest_cache/
+
 ### Logs ###
 logs/
 *.log

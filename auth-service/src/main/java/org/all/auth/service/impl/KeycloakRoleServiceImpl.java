@@ -46,16 +46,24 @@ public class KeycloakRoleServiceImpl implements KeycloakRoleService {
 
     @Override
     public void assignRoles(String userId, List<String> roleNames) {
+        List<RoleRepresentation> allRoles = keycloakClient.getRoles();
         List<RoleRepresentation> roles = roleNames.stream()
-                .map(name -> RoleRepresentation.builder().name(name).build())
+                .map(name -> allRoles.stream()
+                        .filter(r -> name.equals(r.getName()))
+                        .findFirst()
+                        .orElseGet(() -> RoleRepresentation.builder().name(name).build()))
                 .collect(Collectors.toList());
         keycloakClient.assignUserRoles(userId, roles);
     }
 
     @Override
     public void removeRoles(String userId, List<String> roleNames) {
+        List<RoleRepresentation> allRoles = keycloakClient.getRoles();
         List<RoleRepresentation> roles = roleNames.stream()
-                .map(name -> RoleRepresentation.builder().name(name).build())
+                .map(name -> allRoles.stream()
+                        .filter(r -> name.equals(r.getName()))
+                        .findFirst()
+                        .orElseGet(() -> RoleRepresentation.builder().name(name).build()))
                 .collect(Collectors.toList());
         keycloakClient.removeUserRoles(userId, roles);
     }
