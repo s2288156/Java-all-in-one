@@ -139,8 +139,10 @@ AVAILABLE_ROLES=$(api GET "/admin/realms/$REALM/clients/$MASTER_REALM_ID/roles")
 
 # Target roles for full admin access
 # manage-users, view-users: user management
-# manage-clients, view-clients: client and role management (KC 26+)
-TARGET_ROLES='["manage-users","view-users","manage-clients","view-clients"]'
+# manage-clients, view-clients: client management
+# manage-roles: create/delete/update realm roles (RoleInitializer needs this)
+# manage-realm: required for Admin API role operations (KC 26+)
+TARGET_ROLES='["manage-users","view-users","manage-clients","view-clients","manage-roles","manage-realm"]'
 
 ROLES_TO_ASSIGN=$(python3 -c "
 import json, sys
@@ -193,6 +195,19 @@ if [ -n "$SA_TOKEN" ]; then
     info "Service account can access admin API"
   else
     warn "Service account admin API returned HTTP $ADMIN_API_CODE"
+  fi
+
+  # Test role creation (RoleInitializer needs this)
+  ROLE_TEST_CODE=$(curl -sf -o /dev/null -w "%{http_code}" -X POST "$KC/admin/realms/$REALM/roles" \
+    -H "Authorization: Bearer $SA_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"name":"__init_test__","description":"test"}' 2>/dev/null || echo "000")
+  if [ "$ROLE_TEST_CODE" = "201" ]; then
+    curl -sf -X DELETE "$KC/admin/realms/$REALM/roles/__init_test__" \
+      -H "Authorization: Bearer $SA_TOKEN" >/dev/null 2>&1 || true
+    info "Service account can create roles (RoleInitializer will work)"
+  else
+    warn "Service account role creation returned HTTP $ROLE_TEST_CODE"
   fi
 else
   warn "client_credentials grant failed"

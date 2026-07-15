@@ -25,9 +25,9 @@ The script is **idempotent** — safe to run multiple times. It detects existing
 | 4 | Verify client secret matches, reset if mismatched | `GET /admin/realms/{realm}/clients/{id}/client-secret` |
 | 5 | Get service account user ID for `auth-service` | `GET /admin/realms/{realm}/clients/{id}/service-account-user` |
 | 6 | Find admin client: `master-realm` (KC 26+) or `realm-management` (older) | `GET /admin/realms/{realm}/clients?clientId=...` |
-| 7 | Assign admin roles to service account: `manage-users`, `view-users`, `manage-clients`, `view-clients` | `POST /admin/realms/{realm}/users/{id}/role-mappings/clients/{id}` |
+| 7 | Assign admin roles to service account: `manage-users`, `view-users`, `manage-clients`, `view-clients`, `manage-roles`, `manage-realm` | `POST /admin/realms/{realm}/users/{id}/role-mappings/clients/{id}` |
 | 8 | Assign `ROLE_ADMIN` to built-in `admin` user if role exists (otherwise created by `RoleInitializer` on auth-service startup) | `POST /admin/realms/{realm}/users/{id}/role-mappings/realm` |
-| 9 | Verify: test `client_credentials` grant, test admin API access, test ROPC login | Multiple token + API calls |
+| 9 | Verify: test `client_credentials` grant, test admin API access, test role creation, test ROPC login | Multiple token + API calls |
 
 ## Manual Configuration
 
@@ -89,6 +89,8 @@ The auth-service needs admin access to Keycloak for user/role management. The `a
 | `view-users` | List and search users |
 | `manage-clients` | Manage client configurations |
 | `view-clients` | View client configurations |
+| `manage-roles` | Create, update, delete realm roles (required by `RoleInitializer`) |
+| `manage-realm` | Required for Admin API role operations (Keycloak 26+) |
 
 **Configuration in Nacos (`auth-service.yml`):**
 
@@ -213,7 +215,14 @@ curl -X POST http://localhost:28888/api/auth/login \
 
 1. Ensure **Service accounts** is enabled on the `auth-service` client
 2. Ensure the service account has been assigned roles from `master-realm` (KC 26+) or `realm-management` (older versions)
-3. Required roles: `manage-users`, `view-users`, `manage-clients`, `view-clients`
+3. Required roles: `manage-users`, `view-users`, `manage-clients`, `view-clients`, `manage-roles`, `manage-realm`
+4. Re-run `./nacos/init-keycloak.sh` to auto-assign all required roles
+
+### RoleInitializer Warning: "Failed to initialize default roles: 403 Forbidden"
+
+This means the `auth-service` service account is missing the `manage-roles` and/or `manage-realm` roles. The service account can obtain a token but lacks permission to create realm roles.
+
+**Fix:** Run `./nacos/init-keycloak.sh` to re-assign all required roles, then restart `auth-service`.
 
 ### Username Not Unique
 
